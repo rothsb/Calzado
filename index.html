@@ -117,6 +117,10 @@
     }
     .tarjeta__imagen img { width: 100%; height: 100%; object-fit: cover; }
 
+    /* MEJORA 1: cursor de zoom + leve efecto hover */
+    .tarjeta__imagen img { cursor: zoom-in; transition: transform .25s ease; }
+    .tarjeta__imagen:hover img { transform: scale(1.04); }
+
     .tarjeta__info {
       padding: 0.85rem 0.95rem 1rem;
       display: flex;
@@ -185,6 +189,52 @@
     }
     .btn-wa-principal:hover { background: #3d4a30; }
     .btn-wa-principal svg { width: 1.2em; height: 1.2em; }
+
+    /* ============================================
+       MEJORA 1: LIGHTBOX (imagen expandida)
+       ============================================ */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .9);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .lightbox.activo { display: flex; }
+
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      width: auto;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+      animation: zoomIn .22s ease;
+      cursor: default;
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(.9); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+
+    .lightbox__cerrar {
+      position: absolute;
+      top: 14px;
+      right: 22px;
+      font-size: 44px;
+      line-height: 1;
+      color: #fff;
+      cursor: pointer;
+      background: none;
+      border: 0;
+      padding: 0 8px;
+      transition: transform .2s;
+    }
+    .lightbox__cerrar:hover { transform: scale(1.15); }
   </style>
 </head>
 
@@ -209,6 +259,12 @@
       Contactar por WhatsApp
     </a>
 
+  </div>
+
+  <!-- MEJORA 1: estructura del lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox__cerrar" id="lightboxCerrar" aria-label="Cerrar">&times;</button>
+    <img id="lightboxImg" src="" alt="">
   </div>
 
   <script>
@@ -255,8 +311,16 @@
         ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     }
 
+    /* MEJORA 2: el mensaje de WhatsApp ahora incluye el enlace de la imagen */
     function enlaceWhatsApp(producto) {
-      const mensaje = `¡Hola! Me interesa: ${producto.nombre} - $${producto.precio.toLocaleString()}. ¿Me das más info?`;
+      // Enlace absoluto, aunque la ruta fuera relativa
+      const enlaceImagen = new URL(producto.imagen, window.location.href).href;
+
+      const mensaje =
+        `¡Hola! Me interesa: ${producto.nombre} - $${producto.precio.toLocaleString()}.\n` +
+        `Aquí está la imagen del producto:\n${enlaceImagen}\n` +
+        `¿Me das más info?`;
+
       return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensaje)}`;
     }
 
@@ -275,6 +339,8 @@
         <article class="tarjeta">
           <div class="tarjeta__imagen">
             <img src="${escapar(p.imagen)}" alt="${escapar(p.nombre)}" loading="lazy"
+                 class="js-zoom"
+                 data-nombre="${escapar(p.nombre)}"
                  onerror="this.src='${IMAGEN_FALLBACK}'">
           </div>
           <div class="tarjeta__info">
@@ -299,6 +365,43 @@
     });
 
     $waPrincipal.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent('¡Hola! Vengo de la tienda en línea.')}`;
+
+    /* ============================================================
+       MEJORA 1: Lightbox — expandir la imagen al hacer clic
+       ============================================================ */
+    const $lightbox = document.getElementById('lightbox');
+    const $lightboxImg = document.getElementById('lightboxImg');
+    const $lightboxCerrar = document.getElementById('lightboxCerrar');
+
+    function abrirLightbox(src, alt) {
+      $lightboxImg.src = src;
+      $lightboxImg.alt = alt || '';
+      $lightbox.classList.add('activo');
+      $lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarLightbox() {
+      $lightbox.classList.remove('activo');
+      $lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    // Delegación: sigue funcionando aunque el catálogo se repinte con los filtros
+    $catalogo.addEventListener('click', (e) => {
+      const img = e.target.closest('.js-zoom');
+      if (!img) return;
+      abrirLightbox(img.src, img.dataset.nombre || img.alt);
+    });
+
+    $lightboxCerrar.addEventListener('click', cerrarLightbox);
+    $lightbox.addEventListener('click', (e) => {
+      if (e.target === $lightbox) cerrarLightbox(); // clic en el fondo
+    });
+    $lightboxImg.addEventListener('click', (e) => e.stopPropagation()); // clic en la imagen NO cierra
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $lightbox.classList.contains('activo')) cerrarLightbox();
+    });
 
     pintarFiltros();
     pintarCatalogo();
