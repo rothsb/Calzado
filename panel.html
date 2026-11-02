@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Mi Panel - Tienda</title>
+  <style>
+    :root {
+      --bg-page: #f5f4ef;
+      --bg-card: #FFFFFF;
+      --coral-active: #5c6b4a; /* Usamos el verde de la tienda */
+      --text: #1a1d18;
+      --muted: #6b6f63;
+      --border: #e5e4dc;
+      --shadow: 0 12px 32px rgba(43,32,20,0.08);
+      --bad: #e74c3c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px; background-color: var(--bg-page); color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif; min-height: 100vh;
+    }
+    .panel-container { width: 100%; max-width: 520px; margin: 0 auto; }
+    .card { background: var(--bg-card); border-radius: 24px; padding: 30px 26px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+
+    .header { display: flex; align-items: center; gap: 14px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .avatar {
+      width: 64px; height: 64px; border-radius: 50%; background: #e5e4dc; 
+      display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff;
+    }
+    .header-info h1 { margin: 0 0 4px; font-size: 20px; }
+    .header-info p { margin: 0; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+
+    .section { margin-bottom: 22px; }
+    .section h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; font-weight: 700; }
+    .data-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .data-row:last-child { border-bottom: none; }
+    .data-row .label { color: var(--muted); }
+    .data-row .value { font-weight: 600; text-align: right; }
+
+    .acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .btn { width: 100%; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: filter 0.2s; text-align: center; text-decoration: none; display: block; }
+    .btn-primary { background: var(--coral-active); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-secondary { background: #f5f4ef; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e5e4dc; }
+    .btn-danger { background: transparent; color: var(--bad); border: 1px solid #f3d1cc; font-size: 13px; padding: 11px; }
+    .btn-danger:hover { background: #fdf4f2; }
+
+    .loading, .error { text-align: center; padding: 60px 20px; font-size: 14px; color: var(--muted); }
+    .error { color: var(--bad); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="panel-container">
+    <div class="card" id="card">
+      <div class="loading">Cargando tu tienda…</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://yhighuruvnzuiotsomya.supabase.co/rest/v1/';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaWdodXJ1dm56dWlvdHNvbXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1ODQ3NDMsImV4cCI6MjEwOTE2MDc0M30.8TJK8vYkW5d4tu_H8FI9tTcpWR_LK2fSekQ7hROCGvA'; 
+    const RUTA_LOGIN = 'login.html';
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const card = document.getElementById('card');
+
+    function mostrarError(msg) {
+      card.innerHTML = `<div class="error">${msg}</div>`;
+    }
+
+    async function cerrarSesion() {
+      try { await sb.auth.signOut(); } catch (e) {}
+      window.location.href = RUTA_LOGIN;
+    }
+
+    function crearFila(label, valor) {
+      const row = document.createElement('div');
+      row.className = 'data-row';
+      row.innerHTML = `<span class="label">${label}</span><span class="value">${valor}</span>`;
+      return row;
+    }
+
+    function pintarPanel(tienda) {
+      card.innerHTML = '';
+      const datos = tienda.datos || {};
+      const numProductos = Array.isArray(datos.productos) ? datos.productos.length : 0;
+
+      // Encabezado
+      const header = document.createElement('div');
+      header.className = 'header';
+      header.innerHTML = `
+        <div class="avatar">${(tienda.nombre || '?').charAt(0).toUpperCase()}</div>
+        <div class="header-info">
+          <p>Mi Tienda</p>
+          <h1>${tienda.nombre || 'Sin nombre'}</h1>
+        </div>
+      `;
+      card.appendChild(header);
+
+      // Info
+      const secInfo = document.createElement('div');
+      secInfo.className = 'section';
+      secInfo.innerHTML = `<h2>Información</h2>`;
+      if (datos.descripcion) secInfo.appendChild(crearFila('Descripción', datos.descripcion));
+      if (tienda.whatsapp) secInfo.appendChild(crearFila('WhatsApp', tienda.whatsapp));
+      secInfo.appendChild(crearFila('Productos en catálogo', numProductos));
+      card.appendChild(secInfo);
+
+      // Acciones
+      const acciones = document.createElement('div');
+      acciones.className = 'acciones';
+
+      // Botón Editar (irá al tienda.html en modo edición que crearemos después)
+      const btnEditar = document.createElement('a');
+      btnEditar.className = 'btn btn-primary';
+      btnEditar.textContent = '✏️ Editar mi catálogo';
+      btnEditar.href = `tienda.html?id=${tienda.id}&edit=1`; // Aún no existe el modo edit, pero ya está listo el enlace
+      acciones.appendChild(btnEditar);
+
+      // Botón Ver público
+      const btnVer = document.createElement('a');
+      btnVer.className = 'btn btn-secondary';
+      btnVer.href = `tienda.html?id=${tienda.id}`;
+      btnVer.target = '_blank';
+      btnVer.textContent = '👁 Ver mi tienda pública';
+      acciones.appendChild(btnVer);
+
+      // Botón Salir
+      const btnSalir = document.createElement('button');
+      btnSalir.className = 'btn btn-danger';
+      btnSalir.textContent = 'Cerrar sesión';
+      btnSalir.onclick = cerrarSesion;
+      acciones.appendChild(btnSalir);
+
+      card.appendChild(acciones);
+    }
+
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = RUTA_LOGIN; return; }
+
+      const { data, error } = await sb
+        .from('tiendas')
+        .select('id, nombre, whatsapp, datos')
+        .eq('propietario_id', session.user.id)
+        .limit(1);
+
+      if (error) { mostrarError('Error al cargar datos.'); return; }
+      if (!data || data.length === 0) { mostrarError('Tu cuenta no está vinculada a ninguna tienda aún. Contacta al admin.'); return; }
+
+      pintarPanel(data[0]);
+    }
+
+    init();
+  </script>
+</body>
+</html>
