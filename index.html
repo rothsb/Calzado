@@ -367,7 +367,7 @@
 
         // Si seleccionó una foto nueva, la procesamos y subimos
         if (archivoImagenSeleccionado) {
-          urlFinal = await subirImagen(archivoImagenSeleccionado);
+            urlFinal = await subirImagen(archivoImagenSeleccionado, urlImagenActual);
         } else if (!urlFinal) {
           alert('Debes seleccionar una imagen para un producto nuevo.'); 
           btn.textContent = 'Guardar Producto'; btn.disabled = false; return;
