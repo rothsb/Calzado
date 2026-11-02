@@ -6,9 +6,6 @@
   <title>Tienda · Cuadrícula PLUS</title>
 
   <style>
-    /* ============================================
-       VARIABLES DE DISEÑO
-       ============================================ */
     :root {
       --color-fondo: #f5f4ef;
       --color-tarjeta: #ffffff;
@@ -18,18 +15,12 @@
       --color-acento: #5c6b4a;
       --color-wa: #25d366;
       --color-wa-hover: #128c4a;
-
       --fuente: 'Inter', system-ui, sans-serif;
       --radio: 14px;
       --padding-lateral: clamp(1rem, 4vw, 2.5rem);
       --ancho-maximo: 1300px;
     }
-
-    /* ============================================
-       BASE
-       ============================================ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: var(--fuente);
       background: var(--color-fondo);
@@ -37,14 +28,10 @@
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
-
     img { display: block; max-width: 100%; height: auto; }
     a { color: inherit; text-decoration: none; }
     button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
-    /* ============================================
-       LAYOUT
-       ============================================ */
     .contenedor {
       max-width: var(--ancho-maximo);
       margin: 0 auto;
@@ -61,9 +48,6 @@
     .encabezado__titulo span { color: var(--color-acento); font-weight: 300; }
     .encabezado__descripcion { color: var(--color-suave); font-size: 0.9rem; margin-top: 0.35rem; }
 
-    /* ============================================
-       FILTROS
-       ============================================ */
     .filtros {
       display: flex;
       gap: 0.4rem;
@@ -89,9 +73,6 @@
       color: white;
     }
 
-    /* ============================================
-       CATÁLOGO (grid)
-       ============================================ */
     .catalogo {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
@@ -109,16 +90,12 @@
       display: flex;
       flex-direction: column;
     }
-
     .tarjeta__imagen {
       aspect-ratio: 4 / 5;
       overflow: hidden;
       background: var(--color-linea);
     }
-    .tarjeta__imagen img { width: 100%; height: 100%; object-fit: cover; }
-
-    /* MEJORA 1: cursor de zoom + leve efecto hover */
-    .tarjeta__imagen img { cursor: zoom-in; transition: transform .25s ease; }
+    .tarjeta__imagen img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; transition: transform .25s ease; }
     .tarjeta__imagen:hover img { transform: scale(1.04); }
 
     .tarjeta__info {
@@ -170,9 +147,6 @@
     .tarjeta__wa:hover { background: var(--color-wa-hover); }
     .tarjeta__wa svg { width: 1em; height: 1em; }
 
-    /* ============================================
-       BOTÓN WHATSAPP PRINCIPAL
-       ============================================ */
     .btn-wa-principal {
       display: flex;
       align-items: center;
@@ -190,9 +164,6 @@
     .btn-wa-principal:hover { background: #3d4a30; }
     .btn-wa-principal svg { width: 1.2em; height: 1.2em; }
 
-    /* ============================================
-       MEJORA 1: LIGHTBOX (imagen expandida)
-       ============================================ */
     .lightbox {
       display: none;
       position: fixed;
@@ -204,7 +175,6 @@
       padding: 20px;
     }
     .lightbox.activo { display: flex; }
-
     .lightbox img {
       max-width: 92vw;
       max-height: 88vh;
@@ -215,12 +185,10 @@
       animation: zoomIn .22s ease;
       cursor: default;
     }
-
     @keyframes zoomIn {
       from { transform: scale(.9); opacity: 0; }
       to   { transform: scale(1);  opacity: 1; }
     }
-
     .lightbox__cerrar {
       position: absolute;
       top: 14px;
@@ -237,65 +205,51 @@
     .lightbox__cerrar:hover { transform: scale(1.15); }
   </style>
 </head>
-
 <body>
   <div class="contenedor">
-
-    <!-- ENCABEZADO -->
     <header class="encabezado">
-      <h1 class="encabezado__titulo">Tienda <span>esencial</span></h1>
-      <p class="encabezado__descripcion">Selección curada de prendas y accesorios.</p>
+      <h1 class="encabezado__titulo" id="titulo">Cargando...</h1>
+      <p class="encabezado__descripcion" id="descripcion"></p>
     </header>
 
-    <!-- FILTROS -->
     <nav class="filtros" id="filtros"></nav>
-
-    <!-- CATÁLOGO -->
     <main class="catalogo" id="catalogo"></main>
 
-    <!-- WHATSAPP PRINCIPAL -->
     <a class="btn-wa-principal" id="waPrincipal" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Z"/></svg>
       Contactar por WhatsApp
     </a>
-
   </div>
 
-  <!-- MEJORA 1: estructura del lightbox -->
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <button class="lightbox__cerrar" id="lightboxCerrar" aria-label="Cerrar">&times;</button>
     <img id="lightboxImg" src="" alt="">
   </div>
 
+  <!-- Librería de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
   <script>
     // ============================================================
-    // CONFIGURACIÓN — EDITA AQUÍ EL NÚMERO Y LOS TEXTOS
+    // CONEXIÓN A SUPABASE (LOCALES EXTERIORES)
     // ============================================================
-    const CONFIG = {
-      whatsapp: '5215512345678',
-      categorias: ['Todos', 'Playeras', 'Pantalones', 'Sudaderas', 'Chaquetas', 'Accesorios']
-    };
+    // ⚠️ REEMPLAZA LA LLAVE ANON CON LA DE TU NUEVO PROYECTO
+    const SUPABASE_URL = 'https://utchiyaxczbbwpiolajk.supabase.co';
+    const SUPABASE_ANON_KEY = 'PEGA_AQUI_TU_NUEVA_ANON_KEY'; 
+    
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Leemos el ?id= de la URL (por defecto probará con el local-2)
+    const params = new URLSearchParams(location.search);
+    const LOCAL_ID = params.get('id') || 'local-2';
+
+    // Variables globales (se llenan desde la base de datos)
+    let CONFIG = { whatsapp: '', nombre: '', descripcion: '' };
+    let PRODUCTOS = [];
+    let CATEGORIAS = [];
 
     // ============================================================
-    // PRODUCTOS — AGREGA / EDITA AQUÍ
-    // ============================================================
-    const PRODUCTOS = [
-      { nombre: 'Playera Oversize Algodón',    categoria: 'Playeras',   precio: 399,  imagen: 'https://picsum.photos/seed/cuaplus-1/500/625' },
-      { nombre: 'Playera Básica Cuello Redondo', categoria: 'Playeras', precio: 299,  imagen: 'https://picsum.photos/seed/cuaplus-2/500/625' },
-      { nombre: 'Playera Manga Larga',         categoria: 'Playeras',   precio: 449,  imagen: 'https://picsum.photos/seed/cuaplus-3/500/625' },
-      { nombre: 'Pantalón Cargo Utility',      categoria: 'Pantalones', precio: 899,  imagen: 'https://picsum.photos/seed/cuaplus-4/500/625' },
-      { nombre: 'Jeans Slim Tapered',          categoria: 'Pantalones', precio: 999,  imagen: 'https://picsum.photos/seed/cuaplus-5/500/625' },
-      { nombre: 'Jogger Fleece Deportivo',     categoria: 'Pantalones', precio: 749,  imagen: 'https://picsum.photos/seed/cuaplus-6/500/625' },
-      { nombre: 'Sudadera Hoodie Heavy',       categoria: 'Sudaderas',  precio: 849,  imagen: 'https://picsum.photos/seed/cuaplus-7/500/625' },
-      { nombre: 'Sudadera Crewneck Minimal',   categoria: 'Sudaderas',  precio: 799,  imagen: 'https://picsum.photos/seed/cuaplus-8/500/625' },
-      { nombre: 'Chaqueta Cortavientos',       categoria: 'Chaquetas',  precio: 1299, imagen: 'https://picsum.photos/seed/cuaplus-9/500/625' },
-      { nombre: 'Chaqueta Bomber Padded',      categoria: 'Chaquetas',  precio: 1599, imagen: 'https://picsum.photos/seed/cuaplus-10/500/625' },
-      { nombre: 'Gorra Snapback',              categoria: 'Accesorios', precio: 349,  imagen: 'https://picsum.photos/seed/cuaplus-11/500/625' },
-      { nombre: 'Mochila Urbana 20 L',         categoria: 'Accesorios', precio: 1099, imagen: 'https://picsum.photos/seed/cuaplus-12/500/625' }
-    ];
-
-    // ============================================================
-    // LÓGICA — NO EDITAR
+    // LÓGICA DE LA INTERFAZ
     // ============================================================
     const IMAGEN_FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><rect width="400" height="500" fill="#e5e4dc"/><text x="50%" y="50%" fill="#a0a394" font-family="sans-serif" font-size="18" text-anchor="middle" dominant-baseline="middle">Sin imagen</text></svg>'
@@ -311,36 +265,31 @@
         ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
     }
 
-    /* MEJORA 2: el mensaje de WhatsApp ahora incluye el enlace de la imagen */
     function enlaceWhatsApp(producto) {
-      // Enlace absoluto, aunque la ruta fuera relativa
       const enlaceImagen = new URL(producto.imagen, window.location.href).href;
-
-      const mensaje =
-        `¡Hola! Me interesa: ${producto.nombre} - $${producto.precio.toLocaleString()}.\n` +
-        `Aquí está la imagen del producto:\n${enlaceImagen}\n` +
-        `¿Me das más info?`;
-
+      const mensaje = `¡Hola! Me interesa: ${producto.nombre} - $${producto.precio.toLocaleString()}.\nAquí está la imagen del producto:\n${enlaceImagen}\n¿Me das más info?`;
       return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(mensaje)}`;
     }
 
     function pintarFiltros() {
-      $filtros.innerHTML = CONFIG.categorias.map(cat =>
+      $filtros.innerHTML = CATEGORIAS.map(cat =>
         `<button data-categoria="${escapar(cat)}" class="${cat === estado.categoria ? 'activo' : ''}">${escapar(cat)}</button>`
       ).join('');
     }
 
     function pintarCatalogo() {
-      const lista = estado.categoria === 'Todos'
-        ? PRODUCTOS
-        : PRODUCTOS.filter(p => p.categoria === estado.categoria);
+      const lista = estado.categoria === 'Todos' ? PRODUCTOS : PRODUCTOS.filter(p => p.categoria === estado.categoria);
+
+      if (lista.length === 0) {
+        $catalogo.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #6b6f63;">No hay productos en esta categoría.</p>';
+        return;
+      }
 
       $catalogo.innerHTML = lista.map(p => `
         <article class="tarjeta">
           <div class="tarjeta__imagen">
             <img src="${escapar(p.imagen)}" alt="${escapar(p.nombre)}" loading="lazy"
-                 class="js-zoom"
-                 data-nombre="${escapar(p.nombre)}"
+                 class="js-zoom" data-nombre="${escapar(p.nombre)}"
                  onerror="this.src='${IMAGEN_FALLBACK}'">
           </div>
           <div class="tarjeta__info">
@@ -364,11 +313,7 @@
       pintarCatalogo();
     });
 
-    $waPrincipal.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent('¡Hola! Vengo de la tienda en línea.')}`;
-
-    /* ============================================================
-       MEJORA 1: Lightbox — expandir la imagen al hacer clic
-       ============================================================ */
+    // Lightbox
     const $lightbox = document.getElementById('lightbox');
     const $lightboxImg = document.getElementById('lightboxImg');
     const $lightboxCerrar = document.getElementById('lightboxCerrar');
@@ -380,31 +325,73 @@
       $lightbox.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
     }
-
     function cerrarLightbox() {
       $lightbox.classList.remove('activo');
       $lightbox.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
-
-    // Delegación: sigue funcionando aunque el catálogo se repinte con los filtros
     $catalogo.addEventListener('click', (e) => {
       const img = e.target.closest('.js-zoom');
       if (!img) return;
       abrirLightbox(img.src, img.dataset.nombre || img.alt);
     });
-
     $lightboxCerrar.addEventListener('click', cerrarLightbox);
-    $lightbox.addEventListener('click', (e) => {
-      if (e.target === $lightbox) cerrarLightbox(); // clic en el fondo
-    });
-    $lightboxImg.addEventListener('click', (e) => e.stopPropagation()); // clic en la imagen NO cierra
+    $lightbox.addEventListener('click', (e) => { if (e.target === $lightbox) cerrarLightbox(); });
+    $lightboxImg.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && $lightbox.classList.contains('activo')) cerrarLightbox();
     });
 
-    pintarFiltros();
-    pintarCatalogo();
+    // ============================================================
+    // ARRANQUE Y CARGA DE DATOS
+    // ============================================================
+    async function init() {
+      try {
+          const { data, error } = await sb
+          .from('tiendas')
+          .select('nombre, whatsapp, datos')
+          .eq('id', LOCAL_ID)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!data) throw new Error('No se encontró la tienda.');
+
+        // Llenamos la configuración
+        CONFIG.nombre = data.nombre || 'Tienda';
+        CONFIG.whatsapp = data.whatsapp || '';
+        CONFIG.descripcion = (data.datos && data.datos.descripcion) || '';
+        
+        // Llenamos los productos
+        PRODUCTOS = (data.datos && Array.isArray(data.datos.productos)) ? data.datos.productos : [];
+
+        // Armamos las categorías automáticamente
+        CATEGORIAS = ['Todos', ...new Set(PRODUCTOS.map(p => p.categoria))];
+
+        // Pintamos el encabezado
+        const [p1, ...resto] = CONFIG.nombre.split(' ');
+        document.getElementById('titulo').innerHTML = escapar(p1) + (resto.length ? ' <span>' + escapar(resto.join(' ')) + '</span>' : '');
+        document.getElementById('descripcion').textContent = CONFIG.descripcion;
+        document.title = CONFIG.nombre;
+        
+        if(CONFIG.whatsapp) {
+          $waPrincipal.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent('¡Hola! Vengo de la tienda en línea.')}`;
+        } else {
+          $waPrincipal.style.display = 'none';
+        }
+
+        // Pintamos todo
+        pintarFiltros();
+        pintarCatalogo();
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('titulo').textContent = 'Error';
+        document.getElementById('descripcion').textContent = 'No se pudo cargar la tienda.';
+        $catalogo.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 2rem;">Hubo un error al cargar los productos.</p>';
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
