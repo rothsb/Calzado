@@ -150,7 +150,11 @@
         .eq('propietario_id', session.user.id)
         .limit(1);
 
-      if (error) { mostrarError('Error al cargar datos.'); return; }
+           if (error) { 
+        console.error("Error exacto de Supabase:", error);
+        mostrarError('Error: ' + error.message); 
+        return; 
+      }
       if (!data || data.length === 0) { mostrarError('Tu cuenta no está vinculada a ninguna tienda aún. Contacta al admin.'); return; }
 
       pintarPanel(data[0]);
